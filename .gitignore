@@ -22,4 +22,8 @@ erl_crash.dump
 /terraform/.terraform/
 .env
 
+# deployment artifact
 enumerest.tar.gz
+
+# git archive
+package.tar.gz

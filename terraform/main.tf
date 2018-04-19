@@ -1,5 +1,6 @@
 variable "ssh_keys"           { type = "list" }
 variable "digitalocean_token" {}
+variable "username" {}
 
 # Configure the DigitalOcean Provider
 provider "digitalocean" {
@@ -17,4 +18,40 @@ resource "digitalocean_droplet" "elixir-build-box" {
   provisioner "remote-exec" {
     script = "provision.sh"
   }
+}
+
+resource "null_resource" "build" {
+  triggers {
+    build_box = "${digitalocean_droplet.elixir-build-box.id}"
+  }
+
+  connection {
+    type = "ssh"
+    host = "${digitalocean_droplet.elixir-build-box.ipv4_address}"
+    user = "${var.username}"
+  }
+
+  provisioner "local-exec" {
+    command = "cd .. && git archive --format=tar master | gzip > ./package.tar.gz"
+  }
+
+  provisioner "file" {
+    source = "../package.tar.gz"
+    destination = "/tmp/package.tar.gz"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir /app",
+      "tar -C /app -xvzf /tmp/package.tar.gz",
+      "cd /app",
+      "mix deps.get",
+      "MIX_ENV=prod mix release --env=prod",
+    ]
+  }
+
+  provisioner "local-exec" {
+    command = "scp ${var.username}@${digitalocean_droplet.elixir-build-box.ipv4_address}:/app/_build/prod/rel/enumerest/releases/0.1.0/enumerest.tar.gz ../"
+  }
+
 }
