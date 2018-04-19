@@ -51,7 +51,6 @@ resource "null_resource" "build" {
   }
 
   provisioner "local-exec" {
-    command = "scp ${var.username}@${digitalocean_droplet.elixir-build-box.ipv4_address}:/app/_build/prod/rel/enumerest/releases/0.1.0/enumerest.tar.gz ../"
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${var.username}@${digitalocean_droplet.elixir-build-box.ipv4_address}:/app/_build/prod/rel/enumerest/releases/0.1.0/enumerest.tar.gz ../"
   }
-
 }
